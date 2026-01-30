@@ -7,7 +7,7 @@ import fs from "fs-extra";
 const SESSION_DIR = "./session";
 await fs.ensureDir(SESSION_DIR);
 
-// Initialize WhatsApp client
+// Init WhatsApp client
 const client = new Client({
   authStrategy: new LocalAuth({
     clientId: "main",
@@ -33,22 +33,30 @@ client.on("authenticated", () => {
   console.log("✅ Authenticated, session saved");
 });
 
-const waitForSession = async () => {
-  const sessionPath = `${SESSION_DIR}/LocalAuth-main`;
-  while (!(await fs.pathExists(sessionPath))) {
+const waitForSessionFiles = async () => {
+  const pathToSession = `${SESSION_DIR}/LocalAuth-main`;
+  let attempts = 0;
+  while (!(await fs.pathExists(pathToSession)) && attempts < 20) {
     console.log("⏳ Waiting for session files to be written...");
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 500));
+    attempts++;
   }
-  console.log("📁 Session folder confirmed");
+  if (await fs.pathExists(pathToSession)) {
+    console.log("📁 Session folder confirmed");
+  } else {
+    console.warn("⚠️ Session folder not found after wait");
+  }
 };
 
 client.on("ready", async () => {
   console.log("✅ WhatsApp Ready");
 
-  // Wait until session folder exists to ensure GitHub Actions can commit
-  await waitForSession();
+  // Ensure session is fully saved
+  await waitForSessionFiles();
 
   console.log("✅ Session fully saved, exiting safely");
+
+  // Force exit for GitHub Actions
   process.exit(0);
 });
 
@@ -57,5 +65,5 @@ client.on("auth_failure", msg => {
   process.exit(1);
 });
 
-// Start client
+// Start WhatsApp
 client.initialize();
