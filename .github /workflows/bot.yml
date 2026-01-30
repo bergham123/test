@@ -1,0 +1,5 @@
+- name: Restore WhatsApp session
+  uses: actions/cache@v4
+  with:
+    path: session
+    key: whatsapp-session
