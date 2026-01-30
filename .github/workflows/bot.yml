@@ -25,13 +25,6 @@ jobs:
       - name: Run WhatsApp session
         run: npm start
 
-      - name: Wait for session folder
-        run: |
-          while [ ! -d session/LocalAuth-main ]; do
-            echo "⏳ Waiting for session folder..."
-            sleep 1
-          done
-
       - name: Commit session
         run: |
           git config user.name "github-actions"
