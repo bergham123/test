@@ -18,9 +18,9 @@ const client = new Client({
   }
 });
 
-// QR for first time
+// QR code for first-time authentication
 client.on("qr", qr => {
-  console.log("=== SCAN QR ONCE ===");
+  console.log("=== SCAN THIS QR ONCE ===");
   qrcode.generate(qr, { small: true });
 });
 
@@ -28,33 +28,31 @@ client.on("authenticated", () => {
   console.log("✅ Authenticated, session saved");
 });
 
-// When ready, wait small time to ensure session files are written
-client.on("ready", async () => {
-  console.log("✅ WhatsApp Ready");
-
+const waitForSession = async () => {
   const sessionPath = `${SESSION_DIR}/LocalAuth-main`;
-
-  // Wait max 5 seconds to ensure session folder is saved
-  let waited = 0;
-  while (!(await fs.pathExists(sessionPath)) && waited < 5000) {
+  let attempts = 0;
+  while (!(await fs.pathExists(sessionPath)) && attempts < 20) {
+    console.log("⏳ Waiting for session files to be written...");
     await new Promise(r => setTimeout(r, 500));
-    waited += 500;
+    attempts++;
   }
-
   if (await fs.pathExists(sessionPath)) {
     console.log("📁 Session folder confirmed");
   } else {
-    console.warn("⚠️ Session folder not found, but job will continue");
+    console.warn("⚠️ Session folder not found after waiting");
   }
+};
 
-  console.log("✅ Ready to finish job");
-  
-  // Instead of process.exit, just allow Node to finish naturally
-  // GitHub Actions will continue after script ends
-  setTimeout(() => {
-    console.log("🏁 Ending script");
-    process.exit(0);
-  }, 1000); // 1s delay to ensure files saved
+client.on("ready", async () => {
+  console.log("✅ WhatsApp Ready");
+
+  // Ensure session files are fully written
+  await waitForSession();
+
+  console.log("✅ Session fully saved, job will finish now");
+
+  // Exit safely after small delay to ensure GitHub Actions can detect session
+  setTimeout(() => process.exit(0), 1000);
 });
 
 client.on("auth_failure", msg => {
@@ -62,4 +60,5 @@ client.on("auth_failure", msg => {
   process.exit(1);
 });
 
+// Initialize client
 client.initialize();
