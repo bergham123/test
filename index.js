@@ -28,31 +28,14 @@ client.on("authenticated", () => {
   console.log("✅ Authenticated, session saved");
 });
 
-const waitForSession = async () => {
-  const sessionPath = `${SESSION_DIR}/LocalAuth-main`;
-  let attempts = 0;
-  while (!(await fs.pathExists(sessionPath)) && attempts < 20) {
-    console.log("⏳ Waiting for session files to be written...");
-    await new Promise(r => setTimeout(r, 500));
-    attempts++;
-  }
-  if (await fs.pathExists(sessionPath)) {
-    console.log("📁 Session folder confirmed");
-  } else {
-    console.warn("⚠️ Session folder not found after waiting");
-  }
-};
+client.on("ready", () => {
+  console.log("✅ WhatsApp Ready, session active");
 
-client.on("ready", async () => {
-  console.log("✅ WhatsApp Ready");
+  // GitHub Actions will detect session folder naturally
+  console.log("📁 Session folder location:", SESSION_DIR);
 
-  // Ensure session files are fully written
-  await waitForSession();
-
-  console.log("✅ Session fully saved, job will finish now");
-
-  // Exit safely after small delay to ensure GitHub Actions can detect session
-  setTimeout(() => process.exit(0), 1000);
+  // Exit naturally
+  process.exit(0);
 });
 
 client.on("auth_failure", msg => {
@@ -60,5 +43,4 @@ client.on("auth_failure", msg => {
   process.exit(1);
 });
 
-// Initialize client
 client.initialize();
