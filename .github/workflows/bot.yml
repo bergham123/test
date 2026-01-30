@@ -18,12 +18,22 @@ jobs:
           node-version: 20
 
       - run: npm install
-      - run: npm start
+
+      - name: Run WhatsApp session
+        run: npm start
+
+      # Wait until session files exist
+      - name: Wait for session folder
+        run: |
+          while [ ! -d session/LocalAuth-main ]; do
+            echo "⏳ Waiting for session folder..."
+            sleep 1
+          done
 
       - name: Commit session
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add session
-          git commit -m "update whatsapp session" || echo "No changes"
+          git commit -m "update whatsapp session $(date +%F)" || echo "No session changes"
           git push
