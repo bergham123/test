@@ -4,13 +4,9 @@ const { Client, LocalAuth } = pkg;
 import qrcode from "qrcode-terminal";
 import fs from "fs-extra";
 
-// Paths
 const SESSION_DIR = "./session";
-
-// Ensure session directory exists
 await fs.ensureDir(SESSION_DIR);
 
-// Init WhatsApp client
 const client = new Client({
   authStrategy: new LocalAuth({
     clientId: "main",
@@ -26,27 +22,23 @@ const client = new Client({
   }
 });
 
-// Fired only if NO session exists
 client.on("qr", qr => {
-  console.log("🔐 No session found. Scan this QR once:");
+  console.log("=== SCAN THIS QR ===");
   qrcode.generate(qr, { small: true });
 });
 
-// Fired when session is restored OR after QR scan
+client.on("authenticated", () => {
+  console.log("✅ Authenticated, session saved");
+});
+
 client.on("ready", () => {
-  console.log("✅ WhatsApp session is ready");
-  console.log("📁 Session saved in:", SESSION_DIR);
+  console.log("✅ WhatsApp Ready (session restored)");
   process.exit(0);
 });
 
-// Optional: session saved confirmation
-client.on("authenticated", () => {
-  console.log("🔐 Authenticated & session stored");
-});
-
-// Error handling
 client.on("auth_failure", msg => {
-  console.error("❌ Authentication failure:", msg);
+  console.error("❌ Auth failure:", msg);
+  process.exit(1);
 });
 
 client.initialize();
